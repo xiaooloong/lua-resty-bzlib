@@ -26,7 +26,7 @@ local blockSize100k = 9
 local workFactor = 30
 local small = 0
 
-local max_size = blockSize100k * 100000
+local max_size = 8192
 
 local ok, new_tab = pcall(require, "table.new")
 if not ok then
