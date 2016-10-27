@@ -35,7 +35,7 @@ end
 
 local _M = new_tab(0, 32)
 
-_M._VERSION = '0.0.1'
+_M._VERSION = '0.1.0'
 
 local mt = { __index = _M }
 
@@ -65,7 +65,10 @@ function _M.compress(self, text, compresslevel, workfactor)
     if 1 > factor or 250 < factor then
         return nil, 'workfactor must between 1 and 250'
     end
-    local src_buff = ffi.new('char[?]', #text, text)
+    if not text or 'string' ~= type(text) or 1 > #text then
+        return nil, 'there must be at least 1 byte text'
+    end
+    local src_buff = ffi.new('char[' .. #text .. ']', text)
     local ok = bzlib.BZ2_bzBuffToBuffCompress(
         self.dest_buff, self.dest_size,
         src_buff, #text,
@@ -84,7 +87,10 @@ function _M.decompress(self, bin, reducemem)
         return nil, 'not initialized'
     end
     local reduce = tonumber(reducemem) or small
-    local src_buff = ffi.new('char[?]', #bin, bin)
+    if not bin or 'string' ~= type(bin) or 1 > #bin then
+        return nil, nil, 'there must be at least 1 byte binary'
+    end
+    local src_buff = ffi.new('char[' .. #bin .. ']', bin)
     local ok = bzlib.BZ2_bzBuffToBuffDecompress(
         self.dest_buff, self.dest_size,
         src_buff, #bin,
