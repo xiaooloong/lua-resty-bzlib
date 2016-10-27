@@ -88,7 +88,7 @@ function _M.apply(self, text)
         return nil, 'there must be at least 1 byte text'
     end
     local buff_out = self.buff_out
-    local buff_in = ffi.new('char[?]', #text, text)
+    local buff_in = ffi.new('char[' .. #text .. ']', text)
     strm.next_in = buff_in
     strm.avail_in = #text
     local bin = ''
