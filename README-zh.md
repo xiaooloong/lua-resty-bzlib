@@ -157,7 +157,7 @@ local fd2 = io.open(name .. '.txt', 'wb')
 ```
 
 传入数据：
-```
+```lua
 while true do
     local bin = fd1:read(4096)
     if not bin then break end
