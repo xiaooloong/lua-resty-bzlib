@@ -1,8 +1,10 @@
 # Lua-Resty-bzlib
 
-LuaJIT FFI Bindings for libbzip2 - A Lua Bzip2 Library
+LuaJIT FFI Bindings for bzlib(libbz2.so) - A Lua Bzip2 Library
 
-This library requires LuaJIT and libbzip2 to be installed.
+This library requires LuaJIT and `libbz2.so` to be installed.
+
+You can use `yum install -y bzip2-libs` to install `libbz2.so` on CentOS.
 
 ```lua
 local bzlib = require 'resty.bzlib'
@@ -17,11 +19,4 @@ print(raw1)
 print(raw2)
 ```
 
-ngx_lua/OpenResty/LuaJIT 使用的 bz2 压缩库，通过 LuaJIT 的 ffi 调用 libbz2.so 中的 c 函数。
-
-使用须安装 libbz2.so 并在 LuaJIT 或 OpenResty 环境下运行。
-```bash
-yum install -y bzip2-libs
-```
-
-流式压缩/解压开坑中...
+[中文说明](./README-zh.md)
