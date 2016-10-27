@@ -94,11 +94,11 @@ while true do
         break
     end
     --[[
-        local part, err = bz:apply(text)
-        每次将要压缩的部分数据传入 apply 函数
+        local part, err = bz:append(text)
+        每次将要压缩的部分数据传入 append 函数
         如果压缩过程失败会返回 nil 和一个错误信息
     ]]--
-    local part, err = bz:apply(ln .. '\n')
+    local part, err = bz:append(ln .. '\n')
     if not part then
         print(err)
         break
@@ -132,7 +132,7 @@ fd2:close()
 
 注意：
 
-无论 `compress:apply()` 是否成功，结束时都必须调用 `compress:finish()`
+无论 `compress:append()` 是否成功，结束时都必须调用 `compress:finish()`
 
 [返回目录](#目录)
 
@@ -162,14 +162,14 @@ while true do
     local bin = fd1:read(4096)
     if not bin then break end
     --[[
-        local text, finish, err = bz:apply(bin)
+        local text, finish, err = bz:append(bin)
         每次成功的解压都会返回字符串 text，
         并使用 finish 告知压缩流是否解压完成。
         如果 text 为 nil，则 err 会包含错误信息。
     ]]--
-    local text, finish, err = bz:apply(bin)
+    local text, finish, err = bz:append(bin)
     if not text then
-        print('apply no return')
+        print('append no return')
         break
     end
     fd2:write(text)
@@ -183,7 +183,7 @@ fd2:close()
 ```
 
 bzip2 的压缩流本身包含开头和结尾。因此不同于流式压缩，解压时 zlib 库本身可以知道压缩的结束。
-因此在 `decompress:apply()` 方法中，在出错和解压结束时会自动调用结束方法，不需要使用者手动结束。
+因此在 `decompress:append()` 方法中，在出错和解压结束时会自动调用结束方法，不需要使用者手动结束。
 
 [返回目录](#目录)
 

@@ -1,4 +1,9 @@
 local ffi = require 'ffi'
+local ffi_new = ffi.new
+local ffi_string = ffi.string
+local type = type
+local tonumber = tonumber
+
 ffi.cdef[[
 typedef struct {
     char *next_in;
@@ -29,11 +34,11 @@ local action = {
     finish = 2,
 }
 local ret = {
-     [0] = 'ok',
-     [1] = 'run_ok',
-     [2] = 'flush_ok',
-     [3] = 'finish_ok',
-     [4] = 'stream_end',
+    [0]  = 'ok',
+    [1]  = 'run_ok',
+    [2]  = 'flush_ok',
+    [3]  = 'finish_ok',
+    [4]  = 'stream_end',
     [-1] = 'sequence_error',
     [-2] = 'param_error',
     [-3] = 'mem_error',
@@ -48,6 +53,9 @@ local ret = {
 local BZ_MAX_UNUSED = 5000
 local small = 0
 
+local bz_stream_struct_type = ffi.typeof('bz_stream')
+local dest_buff_prt_type = ffi.typeof('char[' .. BZ_MAX_UNUSED .. ']')
+
 local ok, new_tab = pcall(require, "table.new")
 if not ok then
     new_tab = function (narr, nrec) return {} end
@@ -59,8 +67,8 @@ local mt = { __index = _M }
 
 function _M.new(self, reducemem)
     local reduce = 0 == reducemem and 0 or 1
-    local strm = ffi.new('bz_stream')
-    local buff_out = ffi.new('char[?]', BZ_MAX_UNUSED)
+    local strm = ffi_new(bz_stream_struct_type)
+    local buff_out = ffi_new(dest_buff_prt_type)
     local ok = bzlib.BZ2_bzDecompressInit(strm, 0, reduce)
     if 'ok' == ret[ok] then
         return setmetatable({
@@ -72,7 +80,7 @@ function _M.new(self, reducemem)
     end
 end
 
-function _M.apply(self, bin)
+function _M.append(self, bin)
     local strm = self.strm
     if not strm then
         return nil, nil, 'not initialized'
@@ -81,7 +89,7 @@ function _M.apply(self, bin)
         return nil, nil, 'there must be at least 1 byte binary'
     end
     local buff_out = self.buff_out
-    local buff_in = ffi.new('char[' .. #bin .. ']', bin)
+    local buff_in = ffi_new('char[' .. #bin .. ']', bin)
     strm.next_in = buff_in
     strm.avail_in = #bin
     local text = ''
@@ -95,13 +103,13 @@ function _M.apply(self, bin)
         end
         if 'stream_end' == ret[ok] then
             local len = BZ_MAX_UNUSED - strm.avail_out
-            text = text .. ffi.string(buff_out, len)
+            text = text .. ffi_string(buff_out, len)
             bzlib.BZ2_bzDecompressEnd(strm)
             return text, true
         end
         if strm.avail_out < BZ_MAX_UNUSED then
             local len = BZ_MAX_UNUSED - strm.avail_out
-            text = text .. ffi.string(buff_out, len)
+            text = text .. ffi_string(buff_out, len)
         end
         if 0 == strm.avail_in then
             return text, false

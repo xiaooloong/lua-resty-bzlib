@@ -1,4 +1,9 @@
 local ffi = require 'ffi'
+local ffi_new = ffi.new
+local ffi_string = ffi.string
+local type = type
+local tonumber = tonumber
+
 ffi.cdef[[
 typedef struct {
     char *next_in;
@@ -28,11 +33,11 @@ local action = {
     finish = 2,
 }
 local ret = {
-     [0] = 'ok',
-     [1] = 'run_ok',
-     [2] = 'flush_ok',
-     [3] = 'finish_ok',
-     [4] = 'stream_end',
+    [0]  = 'ok',
+    [1]  = 'run_ok',
+    [2]  = 'flush_ok',
+    [3]  = 'finish_ok',
+    [4]  = 'stream_end',
     [-1] = 'sequence_error',
     [-2] = 'param_error',
     [-3] = 'mem_error',
@@ -47,6 +52,9 @@ local ret = {
 local BZ_MAX_UNUSED = 5000
 local blockSize100k = 9
 local workFactor = 30
+
+local bz_stream_struct_type = ffi.typeof('bz_stream')
+local dest_buff_prt_type = ffi.typeof('char[' .. BZ_MAX_UNUSED .. ']')
 
 local ok, new_tab = pcall(require, "table.new")
 if not ok then
@@ -66,8 +74,8 @@ function _M.new(self, compresslevel, workfactor)
     if 1 > factor or 250 < factor then
         return nil, 'workfactor must between 1 and 250'
     end
-    local strm = ffi.new('bz_stream')
-    local buff_out = ffi.new('char[?]', BZ_MAX_UNUSED)
+    local strm = ffi_new(bz_stream_struct_type)
+    local buff_out = ffi_new(dest_buff_prt_type)
     local ok = bzlib.BZ2_bzCompressInit(strm, level, 0, factor)
     if 'ok' == ret[ok] then
         return setmetatable({
@@ -79,7 +87,7 @@ function _M.new(self, compresslevel, workfactor)
     end
 end
 
-function _M.apply(self, text)
+function _M.append(self, text)
     local strm = self.strm
     if not strm then
         return nil, 'not initialized'
@@ -88,7 +96,7 @@ function _M.apply(self, text)
         return nil, 'there must be at least 1 byte text'
     end
     local buff_out = self.buff_out
-    local buff_in = ffi.new('char[' .. #text .. ']', text)
+    local buff_in = ffi_new('char[' .. #text .. ']', text)
     strm.next_in = buff_in
     strm.avail_in = #text
     local bin = ''
@@ -101,7 +109,7 @@ function _M.apply(self, text)
         end
         if strm.avail_out < BZ_MAX_UNUSED then
             local len = BZ_MAX_UNUSED - strm.avail_out
-            bin = bin .. ffi.string(buff_out, len)
+            bin = bin .. ffi_string(buff_out, len)
         end
         if 0 == strm.avail_in then
             return bin
@@ -125,7 +133,7 @@ function _M.finish(self)
         end
         if strm.avail_out < BZ_MAX_UNUSED then
             local len = BZ_MAX_UNUSED - strm.avail_out
-            bin = bin .. ffi.string(buff_out, len)
+            bin = bin .. ffi_string(buff_out, len)
         end
         if 'stream_end' == ret[ok] then
             break

@@ -1,4 +1,9 @@
 local ffi = require 'ffi'
+local ffi_new = ffi.new
+local ffi_string = ffi.string
+local type = type
+local tonumber = tonumber
+
 ffi.cdef[[
 int BZ2_bzBuffToBuffCompress (
     char*         dest,
@@ -18,6 +23,8 @@ int BZ2_bzBuffToBuffDecompress (
     int           verbosity
 );
 ]]
+local unit_prt_type = ffi.typeof('unsigned int[1]')
+
 local bzlib = ffi.load('bz2')
 
 local BZ_OK = 0
@@ -44,8 +51,8 @@ function _M.new(self, dest_buff_size)
     if 0 >= size then
         size = max_size
     end
-    local dest_buff = ffi.new('char[?]', size)
-    local dest_size = ffi.new('unsigned int[1]', size)
+    local dest_buff = ffi_new('char[' .. size .. ']')
+    local dest_size = ffi_new(unit_prt_type, size)
     return setmetatable({
         buff_size = size,
         dest_buff = dest_buff,
@@ -68,7 +75,7 @@ function _M.compress(self, text, compresslevel, workfactor)
     if not text or 'string' ~= type(text) or 1 > #text then
         return nil, 'there must be at least 1 byte text'
     end
-    local src_buff = ffi.new('char[' .. #text .. ']', text)
+    local src_buff = ffi_new('char[' .. #text .. ']', text)
     local ok = bzlib.BZ2_bzBuffToBuffCompress(
         self.dest_buff, self.dest_size,
         src_buff, #text,
@@ -76,7 +83,7 @@ function _M.compress(self, text, compresslevel, workfactor)
     )
     local result
     if BZ_OK == ok then
-        result = ffi.string(self.dest_buff, self.dest_size[0])
+        result = ffi_string(self.dest_buff, self.dest_size[0])
     end
     self.dest_size[0] = self.buff_size
     return result, ok
@@ -90,7 +97,7 @@ function _M.decompress(self, bin, reducemem)
     if not bin or 'string' ~= type(bin) or 1 > #bin then
         return nil, nil, 'there must be at least 1 byte binary'
     end
-    local src_buff = ffi.new('char[' .. #bin .. ']', bin)
+    local src_buff = ffi_new('char[' .. #bin .. ']', bin)
     local ok = bzlib.BZ2_bzBuffToBuffDecompress(
         self.dest_buff, self.dest_size,
         src_buff, #bin,
@@ -98,7 +105,7 @@ function _M.decompress(self, bin, reducemem)
     )
     local result
     if BZ_OK == ok then
-        result = ffi.string(self.dest_buff, self.dest_size[0])
+        result = ffi_string(self.dest_buff, self.dest_size[0])
     end
     self.dest_size[0] = self.buff_size
     return result, ok
