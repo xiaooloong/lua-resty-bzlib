@@ -172,7 +172,15 @@ while true do
         print('append no return')
         break
     end
-    fd2:write(text)
+    --[[
+        每次成功解压不一定会有输出。bzlib 的分块大小是
+        压缩级别（1 到 9） 乘 100, 000 Byte。也就是说，
+        如果 text 有实际内容，都是接近 879 KB 的大小，
+        除了最后一个分块。
+    ]]--
+    if #text > 0 then
+        fd2:write(text)
+    end
     if finish then
         print('stream end')
         break

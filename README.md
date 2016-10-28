@@ -163,7 +163,13 @@ while true do
         print('append no return')
         break
     end
-    fd2:write(text)
+    --[[
+        The returned string may be '' because libbz2.so may buffer some data.
+        In this case, there is no need to write the file.
+    ]]--
+    if #text > 0 then
+        fd2:write(text)
+    end
     if finish then
         print('stream end')
         break
