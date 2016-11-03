@@ -193,6 +193,37 @@ fd2:close()
 bzip2 的压缩流本身包含开头和结尾。因此不同于流式压缩，解压时 zlib 库本身可以知道压缩的结束。
 因此在 `decompress:append()` 方法中，在出错和解压结束时会自动调用结束方法，不需要使用者手动结束。
 
+手动中止压缩：
+如果需要在解压过程中，即在 `local text, finish, err = decompress:append()` 方法返回的 
+`text` 不为 `nil` 或 `finish` 不为 `true` ，需要手动停止解压，结束操作，此时应手动调用 
+`decompress:finish()` 方法，让 bzlib 释放内存。
+```lua
+local bzlib = require 'resty.bzlib'
+local bzdec = require 'resty.bzlib.decompress'
+
+local bz = bzlib:new()
+local text = 'xiaooloong'
+local bin = bz:compress(text)
+    
+while true do
+    local bzd = bzdec:new()
+
+    --[[
+        这里虽然解压成功，但是由于只有很少的数据，因此 part
+        为 '' （不为 nil），数据被 bzlib 缓存在自己的内存结构中。
+        同时由于只有部分数据，finish 也不为 true，因此 bzlib 申请
+        的内存空间并没有释放。此时需要结束解压，需要手动调用 finish()
+    ]]--
+    local part, finish, err = bzd:append(bin:sub(1, 10))
+
+    --[[
+        如果没有调用 finish()，这个循环会瞬间将内存耗尽。
+    ]]--
+    local ok = bzd:finish()
+    print(tostring(ok))
+end
+```
+
 [返回目录](#目录)
 
 ## 依赖

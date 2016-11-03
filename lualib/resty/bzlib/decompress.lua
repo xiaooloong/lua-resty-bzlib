@@ -117,4 +117,13 @@ function _M.append(self, bin)
     end
 end
 
+function _M.finish(self)
+    local strm = self.strm
+    if not strm then
+        return nil, nil, 'not initialized'
+    end
+    local ok = bzlib.BZ2_bzDecompressEnd(strm)
+    return ret[ok]
+end
+
 return _M

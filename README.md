@@ -182,6 +182,36 @@ fd2:close()
 The bzip2 stream contains header and end-of-stream itself. The `decompress:append()` will 
 automaticlly do a cleanning up if decompress is failed or over.
 
+Manually stop decompress:
+If you want to stop decompress when neither error occurs nor decompress comes to an end, you
+must call `Decompress:finish()` manually to deallocate the memory.
+```lua
+local bzlib = require 'resty.bzlib'
+local bzdec = require 'resty.bzlib.decompress'
+
+local bz = bzlib:new()
+local text = 'xiaooloong'
+local bin = bz:compress(text)
+    
+while true do
+    local bzd = bzdec:new()
+
+    local part, finish, err = bzd:append(bin:sub(1, 10))
+    --[[
+        Part of bzip2 stream has been append to the method and no error occurs.
+        If you want to abandon decompress now you must manually call method finish() 
+        as below.
+    ]]--
+
+    local ok = bzd:finish()
+    --[[
+        Without this line, the loop will immediately waste all your memory.
+    ]]--
+    
+    print(tostring(ok))
+end
+```
+
 [Back to Contents](#contents)
 
 ## Prerequisites
