@@ -1,4 +1,5 @@
 local ffi = require 'ffi'
+local ffi_gc = ffi.gc
 local ffi_new = ffi.new
 local ffi_string = ffi.string
 local type = type
@@ -67,7 +68,7 @@ local mt = { __index = _M }
 
 function _M.new(self, reducemem)
     local reduce = 0 == reducemem and 0 or 1
-    local strm = ffi_new(bz_stream_struct_type)
+    local strm = ffi_gc(ffi_new(bz_stream_struct_type), bzlib.BZ2_bzDecompressEnd)
     local buff_out = ffi_new(dest_buff_prt_type)
     local ok = bzlib.BZ2_bzDecompressInit(strm, 0, reduce)
     if 'ok' == ret[ok] then
@@ -98,13 +99,13 @@ function _M.append(self, bin)
         strm.next_out = buff_out
         local ok = bzlib.BZ2_bzDecompress(strm)
         if 'ok' ~= ret[ok] and 'stream_end' ~= ret[ok] then
-            bzlib.BZ2_bzDecompressEnd(strm)
+            bzlib.BZ2_bzDecompressEnd(ffi_gc(strm, nil))
             return nil, false, ret[ok]
         end
         if 'stream_end' == ret[ok] then
             local len = BZ_MAX_UNUSED - strm.avail_out
             text = text .. ffi_string(buff_out, len)
-            bzlib.BZ2_bzDecompressEnd(strm)
+            bzlib.BZ2_bzDecompressEnd(ffi_gc(strm, nil))
             return text, true
         end
         if strm.avail_out < BZ_MAX_UNUSED then
@@ -122,7 +123,7 @@ function _M.finish(self)
     if not strm then
         return nil, nil, 'not initialized'
     end
-    local ok = bzlib.BZ2_bzDecompressEnd(strm)
+    local ok = bzlib.BZ2_bzDecompressEnd(ffi_gc(strm, nil))
     return ret[ok]
 end
 

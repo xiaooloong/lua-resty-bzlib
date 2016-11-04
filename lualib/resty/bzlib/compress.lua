@@ -1,4 +1,5 @@
 local ffi = require 'ffi'
+local ffi_gc = ffi.gc
 local ffi_new = ffi.new
 local ffi_string = ffi.string
 local type = type
@@ -74,7 +75,7 @@ function _M.new(self, compresslevel, workfactor)
     if 1 > factor or 250 < factor then
         return nil, 'workfactor must between 1 and 250'
     end
-    local strm = ffi_new(bz_stream_struct_type)
+    local strm = ffi_gc(ffi_new(bz_stream_struct_type), bzlib.BZ2_bzCompressEnd)
     local buff_out = ffi_new(dest_buff_prt_type)
     local ok = bzlib.BZ2_bzCompressInit(strm, level, 0, factor)
     if 'ok' == ret[ok] then
@@ -139,7 +140,7 @@ function _M.finish(self)
             break
         end
     end
-    local ok = bzlib.BZ2_bzCompressEnd(strm)
+    local ok = bzlib.BZ2_bzCompressEnd(ffi_gc(strm, nil))
     if 'ok' ~= ret[ok] then
         return nil, ret[ok]
     end

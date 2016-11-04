@@ -194,6 +194,7 @@ bzip2 的压缩流本身包含开头和结尾。因此不同于流式压缩，�
 因此在 `decompress:append()` 方法中，在出错和解压结束时会自动调用结束方法，不需要使用者手动结束。
 
 手动中止压缩：
+
 如果需要在解压过程中，即在 `local text, finish, err = decompress:append()` 方法返回的 
 `text` 不为 `nil` 或 `finish` 不为 `true` ，需要手动停止解压，结束操作，此时应手动调用 
 `decompress:finish()` 方法，让 bzlib 释放内存。
@@ -217,7 +218,7 @@ while true do
     local part, finish, err = bzd:append(bin:sub(1, 10))
 
     --[[
-        如果没有调用 finish()，这个循环会瞬间将内存耗尽。
+        如果没有调用 finish()，内存释放将会发生在 luajit gc 时
     ]]--
     local ok = bzd:finish()
     print(tostring(ok))

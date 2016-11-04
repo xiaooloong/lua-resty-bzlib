@@ -42,7 +42,7 @@ end
 
 local _M = new_tab(0, 32)
 
-_M._VERSION = '0.1.2'
+_M._VERSION = '0.1.3'
 
 local mt = { __index = _M }
 
