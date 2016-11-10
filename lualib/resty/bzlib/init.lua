@@ -42,7 +42,7 @@ end
 
 local _M = new_tab(0, 32)
 
-_M._VERSION = '0.1.3'
+_M._VERSION = '0.1.4'
 
 local mt = { __index = _M }
 
@@ -95,7 +95,7 @@ function _M.decompress(self, bin, reducemem)
     end
     local reduce = tonumber(reducemem) or small
     if not bin or 'string' ~= type(bin) or 1 > #bin then
-        return nil, nil, 'there must be at least 1 byte binary'
+        return nil, 'there must be at least 1 byte binary'
     end
     local src_buff = ffi_new('char[' .. #bin .. ']', bin)
     local ok = bzlib.BZ2_bzBuffToBuffDecompress(
